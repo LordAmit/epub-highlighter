@@ -2,6 +2,7 @@
 bla bla bla
 '''
 import os
+import shutil
 import zipfile
 from xml.dom import minidom
 from xml.etree import ElementTree as ET
@@ -44,9 +45,15 @@ def read_container(extract_path: str)->str:
 
 
 def bold_contents(data, to_bold):
+    # insensitive_hippo = re.compile(re.escape('hippo'), re.IGNORECASE)
+    # insensitive_hippo.sub('giraffe', 'I want a hIPpo for my birthday')
+    to_bold = str(to_bold).strip()
     after_bold = "<b>" + to_bold + "</b>"
-    insensitive_data = re.compile(re.escape(to_bold), re.IGNORECASE)
-    return insensitive_data.sub(after_bold, data)
+    # print(to_bold, after_bold)
+    insensitive_pattern = re.compile(re.escape(to_bold), re.IGNORECASE)
+    changed_data = insensitive_pattern.sub(after_bold, data)
+    # print(data, changed_data)
+    return changed_data
 
 
 def read_contents(xml_path) -> str:
@@ -63,23 +70,31 @@ def write_content(xml_path, content):
 
 def replace_xml_files(xmls_with_path, texts):
     for xml in xmls_with_path:
-        content = open(xml).read()
+        # content = open(xml).read()
         xml_file_contents = read_contents(xml)
         # print(xml_file_contents)
-
         for text in texts:
+            # print(text)
             xml_file_contents = bold_contents(xml_file_contents, text)
+            # print(xml_file_contents)
             write_content(xml, xml_file_contents)
+        return
 
 
-def create_epub(extracted_epub_path, original_epub_name):
-    new_epub_name = os.path.splitext(original_epub_name)[0] + "_edited.epub"
-    print(new_epub_name)
-    print(extracted_epub_path)
-    new_epub_path = extract_root + new_epub_name
-
-    distutils.archive_util.make_zipfile(
-        new_epub_path, extracted_epub_path)
+def create_epub(extracted_epub_path, original_epub_path):
+    original_epub_basename = os.path.split(original_epub_path)[1]
+    original_epub_dir = os.path.split(original_epub_path)[0]
+    print(original_epub_dir)
+    # print(original_epub_basename)
+    new_epub_name = os.path.splitext(original_epub_basename)[
+        0] + "_edited.epub"
+    # print(new_epub_name)
+    # print(extracted_epub_path)
+    new_epub_path = original_epub_dir + "/" + new_epub_name
+    # print(new_epub_path)
+    zip_path = distutils.archive_util.make_archive(
+        new_epub_name, format='zip', root_dir=extracted_epub_path)
+    shutil.move(zip_path, new_epub_path + '.zip')
     os.rename(new_epub_path + '.zip', new_epub_path.replace('zip', ''))
 
 
@@ -93,7 +108,7 @@ def main():
     # words = ["Test"]
     epub_file = zipfile.ZipFile(epub_path, mode='r')
     epub_basename: str = os.path.basename(epub_path)
-    print(epub_basename)
+    # print(epub_basename)
     extract_path: str = extract_root + epub_basename + "/"
     # print(extract_path)
     epub_file.extractall(path=extract_path)
@@ -116,7 +131,9 @@ def main():
     # # print(xml_file_contents)
     # write_content(XML_PATH, xml_file_contents)
     replace_xml_files(xmls_with_path, texts)
-    create_epub(extract_root + epub_basename, epub_basename)
+    # print(epub_path)
+    # print(epub_basepath)
+    create_epub(extract_root + epub_basename, epub_path)
     remove_extracted_directory(extract_root)
 
 
