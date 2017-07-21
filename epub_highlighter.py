@@ -51,7 +51,8 @@ def bold_contents(data, to_bold):
     # insensitive_hippo = re.compile(re.escape('hippo'), re.IGNORECASE)
     # insensitive_hippo.sub('giraffe', 'I want a hIPpo for my birthday')
     to_bold = str(to_bold).strip()
-    after_bold = "<b><u><i>" + to_bold + "</b></u></i>"
+    to_bold = ' ' + to_bold + ' '
+    after_bold = "<b><i> " + to_bold + " </b></i>"
     # print(to_bold, after_bold)
     insensitive_pattern = re.compile(re.escape(to_bold), re.IGNORECASE)
     changed_data = insensitive_pattern.sub(after_bold, data)
@@ -92,7 +93,7 @@ def create_epub(extracted_epub_path, original_epub_path):
     print(original_epub_dir)
     # print(original_epub_basename)
     new_epub_name = os.path.splitext(original_epub_basename)[
-        0] + "_edited.epub"
+        0] + "_highlighted.epub"
     # print(new_epub_name)
     # print(extracted_epub_path)
     new_epub_path = original_epub_dir + "/" + new_epub_name
