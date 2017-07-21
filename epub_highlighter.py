@@ -1,5 +1,5 @@
 '''
-bla bla bla
+Oh, an attractive module description here.
 '''
 import os
 import shutil
@@ -15,6 +15,8 @@ MIMETYPE_OPF = 'application/oebps-package+xml'
 MEDIA_TYPE = 'application/xhtml+xml'
 # XML_PATH = '/home/amit/git/epub-highlighter/epub/tmp/test.epub/index_split_000.xhtml'
 LIST_PATH = "/home/amit/git/epub-highlighter/list"
+
+counter = 0
 
 
 def get_content_files(opf_path: str):
@@ -45,13 +47,16 @@ def read_container(extract_path: str)->str:
 
 
 def bold_contents(data, to_bold):
+    global counter
     # insensitive_hippo = re.compile(re.escape('hippo'), re.IGNORECASE)
     # insensitive_hippo.sub('giraffe', 'I want a hIPpo for my birthday')
     to_bold = str(to_bold).strip()
-    after_bold = "<b>" + to_bold + "</b>"
+    after_bold = "<b><u><i>" + to_bold + "</b></u></i>"
     # print(to_bold, after_bold)
     insensitive_pattern = re.compile(re.escape(to_bold), re.IGNORECASE)
     changed_data = insensitive_pattern.sub(after_bold, data)
+    if data != changed_data:
+        counter = counter + 1
     # print(data, changed_data)
     return changed_data
 
@@ -135,6 +140,8 @@ def main():
     # print(epub_basepath)
     create_epub(extract_root + epub_basename, epub_path)
     remove_extracted_directory(extract_root)
+    global counter
+    print("Highlighted " + str(counter) + " Words")
 
 
 if __name__ == '__main__':
