@@ -90,7 +90,7 @@ def replace_xml_files(xmls_with_path, texts):
 def create_epub(extracted_epub_path, original_epub_path):
     original_epub_basename = os.path.split(original_epub_path)[1]
     original_epub_dir = os.path.split(original_epub_path)[0]
-    print(original_epub_dir)
+    # print(original_epub_dir)
     # print(original_epub_basename)
     new_epub_name = os.path.splitext(original_epub_basename)[
         0] + "_highlighted.epub"
@@ -142,7 +142,8 @@ def main():
     create_epub(extract_root + epub_basename, epub_path)
     remove_extracted_directory(extract_root)
     global counter
-    print("Highlighted " + str(counter) + " Words")
+    print("Highlighted " + str(counter) +
+          " Words in " + str(len(xmls)) + " files")
 
 
 if __name__ == '__main__':
