@@ -76,6 +76,7 @@ def write_content(xml_path, content):
 def replace_xml_files(xmls_with_path, texts):
     for xml in xmls_with_path:
         # content = open(xml).read()
+        print("Processing: " + xml)
         xml_file_contents = read_contents(xml)
         # print(xml_file_contents)
         for text in texts:
@@ -83,7 +84,6 @@ def replace_xml_files(xmls_with_path, texts):
             xml_file_contents = bold_contents(xml_file_contents, text)
             # print(xml_file_contents)
             write_content(xml, xml_file_contents)
-        return
 
 
 def create_epub(extracted_epub_path, original_epub_path):
