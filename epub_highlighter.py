@@ -9,13 +9,15 @@ from xml.etree import ElementTree as ET
 import re
 import distutils.archive_util
 
-epub_path = "/home/amit/git/epub-highlighter/epub/test.epub"
-extract_root = "/home/amit/git/epub-highlighter/epub/tmp/"
+EPUB_PATH = "/home/amit/git/epub-highlighter/epub/test.epub"
+# print(os.path.spli(EPUB_PATH)[0] + "tmp")
+# os.mkdir(os.path.spli(EPUB_PATH)[0]+"tmp")
+EXTRACT_ROOT = "/home/amit/git/epub-highlighter/epub/tmp/"
 MIMETYPE_OPF = 'application/oebps-package+xml'
 MEDIA_TYPE = 'application/xhtml+xml'
 # XML_PATH = '/home/amit/git/epub-highlighter/epub/tmp/test.epub/index_split_000.xhtml'
 LIST_PATH = "/home/amit/git/epub-highlighter/list"
-
+current_progress_in_percent = 0
 counter = 0
 
 
@@ -74,10 +76,17 @@ def write_content(xml_path, content):
     open(xml_path, mode='w').write(content)
 
 
+def do_something_with_progress(progress_in_hundred: int):
+    print("Current Progress: " + str(progress_in_hundred))
+
+
 def replace_xml_files(xmls_with_path, texts):
+    global current_progress_in_percent
+    xml_file_count = len(xmls_with_path)
+    files_processed = 0
     for xml in xmls_with_path:
         # content = open(xml).read()
-        print("Processing: " + xml)
+        # print("Processing: " + xml)
         xml_file_contents = read_contents(xml)
         # print(xml_file_contents)
         for text in texts:
@@ -85,6 +94,10 @@ def replace_xml_files(xmls_with_path, texts):
             xml_file_contents = bold_contents(xml_file_contents, text)
             # print(xml_file_contents)
             write_content(xml, xml_file_contents)
+        files_processed = files_processed + 1
+        current_progress_in_percent = int(
+            (files_processed / xml_file_count) * 100)
+        do_something_with_progress(current_progress_in_percent)
 
 
 def create_epub(extracted_epub_path, original_epub_path):
@@ -109,15 +122,23 @@ def remove_extracted_directory(extract_root):
     shutil.rmtree(extract_root)
 
 
-def main():
-
+def extract_epub_to_tmp_directory(
+        epub_path) ->str:
+    epub_basename: str = os.path.basename(EPUB_PATH)
+    temp_dir: str = os.path.split(EPUB_PATH)[
+        0] + "/tmp-" + os.path.splitext(epub_basename)[0]
+    # os.mkdir(temp_dir)
     # words = ["Test"]
     epub_file = zipfile.ZipFile(epub_path, mode='r')
-    epub_basename: str = os.path.basename(epub_path)
     # print(epub_basename)
-    extract_path: str = extract_root + epub_basename + "/"
+    # extract_path: str = EXTRACT_ROOT + epub_basename + "/"
+    extract_path = temp_dir + "/"
     # print(extract_path)
     epub_file.extractall(path=extract_path)
+    return extract_path
+
+
+def get_full_content_xmls_filepaths(extract_path):
     opf_path = read_container(extract_path)
     opf_path_base = os.path.split(opf_path)[0]
 
@@ -128,23 +149,21 @@ def main():
         xml_with_path = opf_path_base + '/' + xml
         xmls_with_path.append(xml_with_path)
 
-    # content = open(XML_PATH).read()
-    # xml_file_contents = read_contents(XML_PATH)
-    # # print(xml_file_contents)
+    return xmls_with_path
+
+
+def main(epub_path, list_path):
+    extract_path = extract_epub_to_tmp_directory(epub_path)
+    xmls_with_path = get_full_content_xmls_filepaths(extract_path)
     texts = read_list_of_words(LIST_PATH)
-    # for text in texts:
-    #     xml_file_contents = bold_contents(xml_file_contents, text)
-    # # print(xml_file_contents)
-    # write_content(XML_PATH, xml_file_contents)
     replace_xml_files(xmls_with_path, texts)
-    # print(epub_path)
-    # print(epub_basepath)
-    create_epub(extract_root + epub_basename, epub_path)
-    remove_extracted_directory(extract_root)
+    create_epub(extract_path, epub_path)
+    remove_extracted_directory(extract_path)
     global counter
     print("Highlighted " + str(counter) +
-          " Words in " + str(len(xmls)) + " files")
+          " Words in " + str(len(xmls_with_path)) + " files")
 
 
 if __name__ == '__main__':
-    main()
+
+    main(EPUB_PATH, LIST_PATH)
