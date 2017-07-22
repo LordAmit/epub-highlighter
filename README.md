@@ -1,6 +1,6 @@
 # Epub Words Highlighter
 
-Epub Words Highlighter highlights all the words from a provided list of words. Give it a epub file (test/test.epub) and a file (list) containing list of words, and it will make them ***bold and italic*** for you in all the chapters, all the paragraphs.
+Epub Words Highlighter highlights all the words from a provided list of words. Give it a epub file (test/test.epub) and a file (list) containing list of words, and it will make them ***bold and italic*** for you in all the chapters, all the paragraphs. What's more, it will even make those caps so that you do not miss them by any chancce!
 
 Why? This will probably be useful for English Proficiency Test Participants, like GRE, IELTS and so on.
 
