@@ -52,7 +52,7 @@ def bold_contents(data, to_bold):
     # insensitive_hippo.sub('giraffe', 'I want a hIPpo for my birthday')
     to_bold = str(to_bold).strip()
     to_bold = ' ' + to_bold + ' '
-    after_bold = "<b><i> " + to_bold + " </b></i>"
+    after_bold = " <b><i>" + to_bold.upper() + "</i></b> "
     # print(to_bold, after_bold)
     insensitive_pattern = re.compile(re.escape(to_bold), re.IGNORECASE)
     changed_data = insensitive_pattern.sub(after_bold, data)
