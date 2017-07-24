@@ -296,6 +296,21 @@
           </packing>
         </child>
         <child>
+          <object class="GtkLinkButton" id="link_button">
+            <property name="label" translatable="yes">Home Page</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="relief">none</property>
+            <property name="uri">https://github.com/LordAmit/epub-highlighter</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">9</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
           <placeholder/>
         </child>
       </object>
