@@ -4,12 +4,13 @@ Oh, an attractive module description here.
 import os
 import shutil
 import zipfile
+from gi.repository import Gtk
 from xml.dom import minidom
 from xml.etree import ElementTree as ET
 import re
 import distutils.archive_util
 
-EPUB_PATH = "/home/amit/git/epub-highlighter/epub/test.epub"
+EPUB_PATH = "/home/amit/git/epub-highlighter/epub/winFriends.epub"
 # print(os.path.spli(EPUB_PATH)[0] + "tmp")
 # os.mkdir(os.path.spli(EPUB_PATH)[0]+"tmp")
 EXTRACT_ROOT = "/home/amit/git/epub-highlighter/epub/tmp/"
@@ -80,7 +81,7 @@ def do_something_with_progress(progress_in_hundred: int):
     print("Current Progress: " + str(progress_in_hundred))
 
 
-def replace_xml_files(xmls_with_path, texts):
+def replace_xml_files(xmls_with_path, texts, progress_bar=None, status_bar=None):
     global current_progress_in_percent
     xml_file_count = len(xmls_with_path)
     files_processed = 0
@@ -95,9 +96,13 @@ def replace_xml_files(xmls_with_path, texts):
             # print(xml_file_contents)
             write_content(xml, xml_file_contents)
         files_processed = files_processed + 1
-        current_progress_in_percent = int(
-            (files_processed / xml_file_count) * 100)
-        do_something_with_progress(current_progress_in_percent)
+        current_progress_in_percent = (files_processed / xml_file_count)
+        msg = "processing " + os.path.basename(xml)
+        status_bar.push(1, msg)
+        progress_bar.set_fraction(current_progress_in_percent)
+        while Gtk.events_pending():
+            Gtk.main_iteration()
+        # do_something_with_progress(current_progress_in_percent)
 
 
 def create_epub(extracted_epub_path, original_epub_path):
@@ -124,8 +129,8 @@ def remove_extracted_directory(extract_root):
 
 def extract_epub_to_tmp_directory(
         epub_path) ->str:
-    epub_basename: str = os.path.basename(EPUB_PATH)
-    temp_dir: str = os.path.split(EPUB_PATH)[
+    epub_basename = os.path.basename(EPUB_PATH)
+    temp_dir = os.path.split(EPUB_PATH)[
         0] + "/tmp-" + os.path.splitext(epub_basename)[0]
     # os.mkdir(temp_dir)
     # words = ["Test"]
@@ -152,18 +157,19 @@ def get_full_content_xmls_filepaths(extract_path):
     return xmls_with_path
 
 
-def main(epub_path, list_path):
+def main(epub_path, list_path, progress_bar=None, status_bar=None):
     extract_path = extract_epub_to_tmp_directory(epub_path)
     xmls_with_path = get_full_content_xmls_filepaths(extract_path)
     texts = read_list_of_words(LIST_PATH)
-    replace_xml_files(xmls_with_path, texts)
+    replace_xml_files(xmls_with_path, texts, progress_bar, status_bar)
     create_epub(extract_path, epub_path)
     remove_extracted_directory(extract_path)
     global counter
-    print("Highlighted " + str(counter) +
-          " Words in " + str(len(xmls_with_path)) + " files")
+    success_msg = "Complete! Highlighted " + \
+        str(counter) + " Words in " + str(len(xmls_with_path)) + " files"
+    status_bar.push(1, success_msg)
 
 
 if __name__ == '__main__':
 
-    main(EPUB_PATH, LIST_PATH)
+    main(EPUB_PATH, LIST_PATH, None)
