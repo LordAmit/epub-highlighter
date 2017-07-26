@@ -4,6 +4,7 @@ Oh, an attractive module description here.
 import os
 import shutil
 import zipfile
+from gi.repository import Gtk
 from xml.dom import minidom
 from xml.etree import ElementTree as ET
 import re
@@ -19,6 +20,7 @@ MEDIA_TYPE = 'application/xhtml+xml'
 LIST_PATH = "/home/amit/git/epub-highlighter/list"
 current_progress_in_percent = 0
 counter = 0
+DELIMITER = ',-,'
 
 
 def get_content_files(opf_path: str):
@@ -48,20 +50,26 @@ def read_container(extract_path: str)->str:
     # print(i[0].tag)
 
 
-def bold_contents(data, to_bold):
+def highlight_content(content, word, meaning=None):
     global counter
     # insensitive_hippo = re.compile(re.escape('hippo'), re.IGNORECASE)
     # insensitive_hippo.sub('giraffe', 'I want a hIPpo for my birthday')
-    to_bold = str(to_bold).strip()
-    to_bold = ' ' + to_bold + ' '
-    after_bold = " <b><i>" + to_bold.upper() + "</i></b> "
-    # print(to_bold, after_bold)
-    insensitive_pattern = re.compile(re.escape(to_bold), re.IGNORECASE)
-    changed_data = insensitive_pattern.sub(after_bold, data)
-    if data != changed_data:
+    word = str(word).strip()
+    word = ' ' + word + ' '
+    if not meaning:
+        highlighted_word = " <b><i>" + word.upper() + "</i></b> "
+    else:
+        highlighted_word = " <b><i>" + \
+            word.upper() + "</i></b> [" + meaning.strip() + "] "
+    # print(word, highlighted_word)
+    # exit()
+    insensitive_pattern = re.compile(re.escape(word), re.IGNORECASE)
+    changed_content = insensitive_pattern.sub(highlighted_word, content)
+    if content != changed_content:
         counter = counter + 1
-    # print(data, changed_data)
-    return changed_data
+    # print(content, changed_content)
+    # exit()
+    return changed_content
 
 
 def read_contents(xml_path) -> str:
@@ -72,6 +80,18 @@ def read_list_of_words(list_path):
     return open(list_path).readlines()
 
 
+def read_list_of_words_with_meanings(list_path):
+    contents = open(list_path).readlines()
+    words = []
+    meanings = []
+    for content in contents:
+        # print(content)
+        split_content = str(content).split(DELIMITER)
+        words.append(split_content[0])
+        meanings.append(split_content[1])
+    return words, meanings
+
+
 def write_content(xml_path, content):
     open(xml_path, mode='w').write(content)
 
@@ -80,7 +100,7 @@ def do_something_with_progress(progress_in_hundred: int):
     print("Current Progress: " + str(progress_in_hundred))
 
 
-def replace_xml_files(xmls_with_path, texts):
+def replace_xml_files(xmls_with_path, words, progress_bar=None, status_bar=None, meanings=None):
     global current_progress_in_percent
     xml_file_count = len(xmls_with_path)
     files_processed = 0
@@ -89,15 +109,27 @@ def replace_xml_files(xmls_with_path, texts):
         # print("Processing: " + xml)
         xml_file_contents = read_contents(xml)
         # print(xml_file_contents)
-        for text in texts:
-            # print(text)
-            xml_file_contents = bold_contents(xml_file_contents, text)
+        for i in range(0, len(words)):
+            word = words[i]
+            # print(word)
+            if meanings:
+                meaning = meanings[i]
+                xml_file_contents = highlight_content(
+                    xml_file_contents, word, meaning)
+            else:
+                xml_file_contents = highlight_content(
+                    xml_file_contents, word)
             # print(xml_file_contents)
             write_content(xml, xml_file_contents)
         files_processed = files_processed + 1
-        current_progress_in_percent = int(
-            (files_processed / xml_file_count) * 100)
-        do_something_with_progress(current_progress_in_percent)
+        current_progress_in_percent = (files_processed / xml_file_count)
+        msg = "processing " + os.path.basename(xml)
+        if status_bar and progress_bar:
+            status_bar.push(1, msg)
+            progress_bar.set_fraction(current_progress_in_percent)
+            while Gtk.events_pending():
+                Gtk.main_iteration()
+        # do_something_with_progress(current_progress_in_percent)
 
 
 def create_epub(extracted_epub_path, original_epub_path):
@@ -124,8 +156,8 @@ def remove_extracted_directory(extract_root):
 
 def extract_epub_to_tmp_directory(
         epub_path) ->str:
-    epub_basename: str = os.path.basename(EPUB_PATH)
-    temp_dir: str = os.path.split(EPUB_PATH)[
+    epub_basename = os.path.basename(EPUB_PATH)
+    temp_dir = os.path.split(EPUB_PATH)[
         0] + "/tmp-" + os.path.splitext(epub_basename)[0]
     # os.mkdir(temp_dir)
     # words = ["Test"]
@@ -152,18 +184,27 @@ def get_full_content_xmls_filepaths(extract_path):
     return xmls_with_path
 
 
-def main(epub_path, list_path):
+def main(epub_path, list_path, progress_bar=None, status_bar=None, with_meaning: bool = None):
     extract_path = extract_epub_to_tmp_directory(epub_path)
     xmls_with_path = get_full_content_xmls_filepaths(extract_path)
-    texts = read_list_of_words(LIST_PATH)
-    replace_xml_files(xmls_with_path, texts)
+    if not with_meaning:
+        texts = read_list_of_words(list_path)
+        replace_xml_files(xmls_with_path, texts, progress_bar, status_bar)
+    else:
+        words, meanings = read_list_of_words_with_meanings(list_path)
+        # print(words, meanings)
+        replace_xml_files(xmls_with_path, words,
+                          progress_bar, status_bar, meanings)
     create_epub(extract_path, epub_path)
     remove_extracted_directory(extract_path)
     global counter
-    print("Highlighted " + str(counter) +
-          " Words in " + str(len(xmls_with_path)) + " files")
+    success_msg = "Complete! Highlighted " + \
+        str(counter) + " Words in " + str(len(xmls_with_path)) + " files"
+    if status_bar:
+        status_bar.push(1, success_msg)
+    else:
+        print(success_msg)
 
 
 if __name__ == '__main__':
-
-    main(EPUB_PATH, LIST_PATH)
+    main(EPUB_PATH, LIST_PATH, None, None, False)
