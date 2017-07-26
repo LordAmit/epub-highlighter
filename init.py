@@ -28,12 +28,13 @@ class Handler:
         self.info_holder.epub_word_list_address = args[0].get_filename()
 
     def button_convert(self, *args):
+        check_meaning = builder.get_object("check_with_meaning")
         status_bar = builder.get_object("status_bar")
         if util.check_if_path_exists(self.info_holder.epub_file_address) and util.check_if_path_exists(self.info_holder.epub_word_list_address) and util.check_if_epub(self.info_holder.epub_file_address):
             progress_bar = builder.get_object("epub_progress")
             # print("got epub_progress")
             epub_highlighter.main(
-                self.info_holder.epub_file_address, self.info_holder.epub_word_list_address, progress_bar, status_bar)
+                self.info_holder.epub_file_address, self.info_holder.epub_word_list_address, progress_bar, status_bar, check_meaning.get_active())
         else:
             status_bar.push(1, "Error: Please check files.")
 
@@ -42,7 +43,6 @@ builder = Gtk.Builder()
 builder.add_from_file("second.glade")
 
 window = builder.get_object("epub_window")
-
 info_holder = InfoHolder()
 
 builder.connect_signals(Handler(info_holder, builder))
